@@ -98,6 +98,8 @@ public class Window {
         glfwSetMouseButtonCallback(glfwWindow, MouseListener::mouseButtonCallback);
         glfwSetScrollCallback(glfwWindow, MouseListener::mouseScrollCallback);
 
+        glfwSetKeyCallback(glfwWindow, KeyListener::keyCallback);
+
 
         //Make the OpenGl context current
         glfwMakeContextCurrent(glfwWindow);
@@ -123,6 +125,7 @@ public class Window {
             //Poll events
             glfwPollEvents();
 
+          
 
             glClearColor(1.0f,0.0f,0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
