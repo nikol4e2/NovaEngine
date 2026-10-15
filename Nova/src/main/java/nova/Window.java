@@ -31,10 +31,11 @@ public class Window {
     public static void changeScene(int newScene){
         switch(newScene){
             case 0:currentScene=  new LevelEditorScene();
-            //currentScene.init();
+            currentScene.init();
             break;
 
             case 1: currentScene=  new LevelScene();
+            currentScene.init();
             break;
             default: assert false :"Unknown scene "+newScene;
             break;
@@ -154,12 +155,15 @@ public class Window {
 
             glClearColor(1.0f,0.0f,0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
-            currentScene.update(dt);
-            glfwSwapBuffers(glfwWindow);
-            endTime= Time.getTime();
+
             if(dt>0){
                 currentScene.update(dt);
             }
+
+            glfwSwapBuffers(glfwWindow);
+            endTime= Time.getTime();
+            dt=endTime-beginTime;
+
 
             beginTime= endTime;
         }
