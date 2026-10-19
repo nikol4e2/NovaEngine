@@ -139,6 +139,7 @@ public class Window {
         // bindings available for use
         GL.createCapabilities();
 
+        glViewport(0, 0, width, height);
         Window.changeScene(0);
     }
 
@@ -153,7 +154,7 @@ public class Window {
 
 
 
-            glClearColor(1.0f,0.0f,0.0f, 1.0f);
+            glClearColor(0.1f,0.1f,0.1f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
             if(dt>0){

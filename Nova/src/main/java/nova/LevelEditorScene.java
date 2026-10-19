@@ -4,10 +4,14 @@ import org.lwjgl.BufferUtils;
 
 import java.awt.event.KeyEvent;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 
 import static org.lwjgl.opengl.ARBVertexArrayObject.glBindVertexArray;
 import static org.lwjgl.opengl.ARBVertexArrayObject.glGenVertexArrays;
+import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL11.*;
 
 public class LevelEditorScene extends Scene {
 
@@ -39,20 +43,19 @@ public class LevelEditorScene extends Scene {
     private int vertexId , fragmentId, shaderProgram;
 
 
-    private float [] vertexArray={
-      //position     //color
-            0.5f, -0.5f, 0.0f,      1.0f, 0.0f, 0.0f, 1.0f, //bottom right
-            -0.5f, -0.5f, 0.0f,     0.0f, 1.0f, 0.0f, 1.0f, //top left
-            0.5f, 0.5f, 0.0f,       0.0f, 0.0f, 1.0f, 1.0f, // top right
-            -0.5f, -0.5f, 0.0f,     1.0f, 1.0f, 0.0f, 1.0f, //bottom left
+    private float[] vertexArray = {
+            // position                 // color
+            0.5f, -0.5f, 0.0f,         1.0f, 0.0f, 0.0f, 1.0f, // bottom right - red
+            -0.5f, -0.5f, 0.0f,         0.0f, 1.0f, 0.0f, 1.0f, // bottom left - green
+            0.5f,  0.5f, 0.0f,         0.0f, 0.0f, 1.0f, 1.0f, // top right - blue
+            -0.5f,  0.5f, 0.0f,         1.0f, 1.0f, 0.0f, 1.0f  // top left - yellow
     };
 
     //IMPORTANT: Must be in counter-clockwise order
-    private int [] elementArray={
-            2,1,0, //Top right triangle
-            0,1,3 //bottom left triangle
+    private int[] elementArray = {
+            0, 1, 3,
+            0, 3, 2
     };
-
     private int vaoId, vboId, eboId;
 
 
@@ -142,6 +145,30 @@ public class LevelEditorScene extends Scene {
         //Create VBO upload the vertex buffer
         vboId=glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, vboId);
+        glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
+
+
+        //Create the indices and upload
+        IntBuffer elementBuffer = BufferUtils.createIntBuffer(elementArray.length);
+        elementBuffer.put(elementArray).flip();
+
+        eboId=glGenBuffers();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementBuffer, GL_STATIC_DRAW);
+
+        // Add the vertex attribute pointers
+        int positionSize = 3;
+        int colorSize = 4;
+        int floatBiteSize = 4;
+        int vertexSizeBytes= (positionSize + colorSize )*floatBiteSize;
+        glVertexAttribPointer(0, positionSize, GL_FLOAT, false, vertexSizeBytes, 0);
+        glEnableVertexAttribArray(0);
+
+
+        glVertexAttribPointer(1,colorSize, GL_FLOAT, false, vertexSizeBytes, positionSize*floatBiteSize);
+        glEnableVertexAttribArray(1);
+
+
 
 
 
@@ -149,6 +176,26 @@ public class LevelEditorScene extends Scene {
 
     @Override
     public void update(float dt) {
+            //Bind shader program
+        glUseProgram(shaderProgram);
 
+        //Bind the VAO that we are using
+        glBindVertexArray(vaoId);
+
+        //Enable the vertex attribute pointers
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+
+        glDrawElements(GL_TRIANGLES, elementArray.length, GL_UNSIGNED_INT, 0);
+
+
+
+        //Unbind everythhing
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+
+        glBindVertexArray(0);
+
+        glUseProgram(0);
     }
 }
