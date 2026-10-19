@@ -1,5 +1,6 @@
 package nova;
 
+import org.joml.Vector2f;
 import org.lwjgl.BufferUtils;
 import renderer.Shader;
 
@@ -70,6 +71,7 @@ public class LevelEditorScene extends Scene {
 
     @Override
     public void init() {
+        this.camera=new Camera(new Vector2f());
         defaultShader=new Shader("assets/shaders/default.glsl");
         defaultShader.compile();
         vaoId=glGenVertexArrays();
@@ -118,6 +120,9 @@ public class LevelEditorScene extends Scene {
     public void update(float dt) {
 
       defaultShader.use();
+
+      defaultShader.uploadMat4f("uProjection",camera.getProjectionMatrix());
+      defaultShader.uploadMat4f("uView",camera.getViewMatrix());
         //Bind the VAO that we are using
         glBindVertexArray(vaoId);
 
