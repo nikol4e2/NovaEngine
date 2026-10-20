@@ -10,17 +10,19 @@ out vec4 fColor;
 
 void main(){
     fColor= aColor;
-    gl_Position=vec4(aPos,1.0);
+    gl_Position=uProj * uView *vec4(aPos,1.0);
 }
 
 #type fragment
 #version 330 core
 in vec4 fColor;
 
+uniform float uTime;
 out vec4 color;
 
 void main(){
 
-    color=fColor;
+    float avg=(fColor.r+fColor.g+fColor.b)/3;
+    color=vec4(avg,avg,avg,1);
 
 }

@@ -1,48 +1,27 @@
+
 package nova;
 
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
+
 import util.Time;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-
-import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Window {
 
-    private int  width, height;
+    private int width;
+    private int height;
+    private String title;
 
-    private String  title;
+    private long glfwWindow;
 
-    private Long glfwWindow; // memory address
-
-
-    //Singleton patter
-    private static Window window=null;
-
-
+    private static Window window = null;
     private static Scene currentScene;
-
-
-    public static void changeScene(int newScene){
-        switch(newScene){
-            case 0:currentScene=  new LevelEditorScene();
-            currentScene.init();
-            break;
-
-            case 1: currentScene=  new LevelScene();
-            currentScene.init();
-            break;
-            default: assert false :"Unknown scene "+newScene;
-            break;
-        }
-    }
-
-
 
     private Window() {
         this.width = 1920;
@@ -61,47 +40,58 @@ public class Window {
         return glfwWindowShouldClose(glfwWindow);
     }
 
-    public void run(){
-        System.out.println("Hello LWJGL"+ Version.getVersion());
+    public static void changeScene(int newScene) {
+        switch (newScene) {
+            case 0:
+                currentScene = new LevelEditorScene();
+                currentScene.init();
+                break;
+
+            case 1:
+                currentScene = new LevelScene();
+                currentScene.init();
+                break;
+
+            default:
+                throw new IllegalArgumentException(
+                        "Unknown scene: " + newScene
+                );
+        }
+    }
+
+    public void run() {
+        System.out.println("Hello LWJGL " + Version.getVersion());
+
         init();
         loop();
-
-
-        //Free memory
 
         glfwFreeCallbacks(glfwWindow);
         glfwDestroyWindow(glfwWindow);
 
-
-        //Terminate GLFW and free the error callback
-
         glfwTerminate();
-        glfwSetErrorCallback(null).free();
 
-
+        GLFWErrorCallback callback = glfwSetErrorCallback(null);
+        if (callback != null) {
+            callback.free();
+        }
     }
 
-
     public void init() {
-        //Setup an error callback
+        GLFWErrorCallback.createPrint(System.err).set();
 
-        GLFWErrorCallback.createPrint(System.err).set(); // creates printing method to where to print errors
-
-
-        //Intilize GLWF
-        if(!glfwInit())
-        {
-            throw new IllegalStateException("Unable to initialize GLFW");
+        if (!glfwInit()) {
+            throw new IllegalStateException(
+                    "Unable to initialize GLFW"
+            );
         }
 
-        //Configure GLWF
         glfwDefaultWindowHints();
+
+        // Prepare the window before displaying it
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
         glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
-
-        //Create the window
         glfwWindow = glfwCreateWindow(
                 width,
                 height,
@@ -109,67 +99,77 @@ public class Window {
                 NULL,
                 NULL
         );
-        if(glfwWindow==null)
-        {
-            throw new IllegalStateException("Unable to create GLFW window");
+
+        if (glfwWindow == NULL) {
+            throw new IllegalStateException(
+                    "Unable to create GLFW window"
+            );
         }
 
-        glfwSetCursorPosCallback(glfwWindow, MouseListener::mousePosCallback);
-        glfwSetMouseButtonCallback(glfwWindow, MouseListener::mouseButtonCallback);
-        glfwSetScrollCallback(glfwWindow, MouseListener::mouseScrollCallback);
+        // Input callbacks
+        glfwSetCursorPosCallback(
+                glfwWindow,
+                MouseListener::mousePosCallback
+        );
 
-        glfwSetKeyCallback(glfwWindow, KeyListener::keyCallback);
+        glfwSetMouseButtonCallback(
+                glfwWindow,
+                MouseListener::mouseButtonCallback
+        );
 
+        glfwSetScrollCallback(
+                glfwWindow,
+                MouseListener::mouseScrollCallback
+        );
 
-        //Make the OpenGl context current
+        glfwSetKeyCallback(
+                glfwWindow,
+                KeyListener::keyCallback
+        );
+
+        // Initialize OpenGL
         glfwMakeContextCurrent(glfwWindow);
 
-        //Enable v-sync
+        // Enable V-Sync
         glfwSwapInterval(1);
 
-
-        //Make the window visible
-        glfwShowWindow(glfwWindow);
-
-
-        // This line is critical for LWJGL's interoperation with GLFW's
-        // OpenGL context, or any context that is managed externally.
-        // LWJGL detects the context that is current in the current thread,
-        // creates the GLCapabilities instance and makes the OpenGL
-        // bindings available for use
         GL.createCapabilities();
 
+        // Set viewport
         glViewport(0, 0, width, height);
+
+        // Background color
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+
+        // Initialize the scene before showing the window
         Window.changeScene(0);
+
+        // Display the prepared window
+        glfwShowWindow(glfwWindow);
     }
 
     public void loop() {
-        float beginTime= Time.getTime();
-        float endTime= Time.getTime();
-        float dt= -1.0f;
+        float beginTime = Time.getTime();
+        float endTime;
+        float dt = 0.0f;
 
-        while(!glfwWindowShouldClose(glfwWindow)) {
-            //Poll events
+        while (!glfwWindowShouldClose(glfwWindow)) {
             glfwPollEvents();
 
-
-
-            glClearColor(0.1f,0.1f,0.1f, 1.0f);
+            // Clear the previous frame
             glClear(GL_COLOR_BUFFER_BIT);
 
-            if(dt>0){
+            // Update and render the current scene
+            if (currentScene != null) {
                 currentScene.update(dt);
             }
 
+            // Display the rendered frame
             glfwSwapBuffers(glfwWindow);
-            endTime= Time.getTime();
-            dt=endTime-beginTime;
 
-
-            beginTime= endTime;
+            endTime = Time.getTime();
+            dt = endTime - beginTime;
+            beginTime = endTime;
         }
-
-
     }
-
 }
